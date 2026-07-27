@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Presentation Studio — Visual Builder</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-area">
+        <button id="mainMenuBtn" class="burger" aria-label="Open main menu" aria-expanded="false">☰</button>
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div class="brand-copy"><strong>Presentation Studio</strong><span>Visual Builder</span></div>
+      </div>
+      <div class="top-actions">
+        <button id="templateShortcut" class="primary">＋ Use Template</button>
+        <button id="importTemplateShortcut" class="secondary-strong">⇩ Import Template</button>
+        <button id="myTemplatesShortcut">★ My Templates</button>
+        <button id="previewBtn">▶ Preview</button>
+        <button id="saveBtn">Save</button>
+        <button id="exportBtn" class="export-action">Export 4K</button>
+        <div class="user-chip"><span>{{ user.name }}</span><small>{{ user.role|title }}</small></div>
+      </div>
+    </header>
+
+    <aside id="mainMenu" class="main-menu" aria-label="Main menu">
+      <div class="menu-head">
+        <div><strong>Tools & settings</strong><span>Advanced tasks are kept here</span></div>
+        <button id="closeMainMenu" aria-label="Close menu">×</button>
+      </div>
+      <div class="menu-section">
+        <h3>Presentation</h3>
+        <button id="newSlideBtn">＋ New blank slide</button>
+        <button id="duplicateSlideBtn">Duplicate current slide</button>
+        <button id="deleteSlideBtn" class="danger-text">Delete current slide</button>
+      </div>
+      <div class="menu-section">
+        <h3>Insert</h3>
+        <button id="addTextBtn">Add text</button>
+        <button id="addShapeBtn">Add shape</button>
+        <button id="addImageBtn">Add image or icon</button>
+        <button data-pro="components">Component library</button>
+        <button data-pro="connectors">Connectors</button>
+        <button data-pro="dashboards">BI dashboard blocks</button>
+      </div>
+      <div class="menu-section">
+        <h3>Design</h3>
+        <button data-pro="themes">Themes</button>
+        <button data-pro="colours">Colour palette</button>
+        <button data-pro="master">Slide master</button>
+        <button data-pro="arrange">Arrange & align</button>
+      </div>
+      <div class="menu-section">
+        <h3>Files & assets</h3>
+        <button id="menuImportPresentation">Import presentation</button>
+        <button id="menuImportSlide">Import slide image</button>
+        <button data-pro="assets">Asset manager</button>
+        <button data-pro="export">Export centre</button>
+        <button data-pro="marketplace">Template packs</button>
+      </div>
+      <div class="menu-section">
+        <h3>Account</h3>
+        {% if user.role == "admin" %}<a class="menu-link" href="{{ url_for('admin') }}">Admin dashboard</a>{% endif %}
+        <a class="menu-link" href="{{ url_for('logout') }}">Sign out</a>
+      </div>
+      <div class="menu-section compact">
+        <button id="toggleLeftPanelBtn">Show / hide slide panel</button>
+        <button id="toggleRightPanelBtn">Show / hide properties</button>
+        <button id="fitBtn">Fit slide to screen</button>
+        <button id="helpBtn">Help & keyboard shortcuts</button>
+      </div>
+    </aside>
+    <div id="menuBackdrop" class="menu-backdrop hidden"></div>
+
+    <aside class="left-panel">
+      <div class="simple-tabs">
+        <button class="tab active" data-tab="templates">Marketplace</button>
+        <button class="tab" data-tab="mytemplates">My Templates</button>
+        <button class="tab" data-tab="slides">My Slides</button>
+      </div>
+      <section id="templatesTab" class="tab-pane active">
+        <div class="panel-intro">
+          <strong>Ready-made templates</strong>
+          <span>Choose a design, then replace the text and numbers.</span>
+        </div>
+        <input id="templateSearch" class="search" placeholder="Search templates">
+        <div id="templateGrid" class="template-grid"></div>
+      </section>
+      <section id="mytemplatesTab" class="tab-pane">
+        <div class="panel-intro"><strong>My Templates</strong><span>Templates imported from the Marketplace or your computer.</span></div>
+        <input id="myTemplateSearch" class="search" placeholder="Search My Templates">
+        <div id="myTemplatesGrid" class="template-grid"></div>
+      </section>
+      <section id="slidesTab" class="tab-pane">
+        <div class="panel-intro"><strong>Your presentation</strong><span>Click a slide to continue editing.</span></div>
+        <div id="slidesList" class="slides-list"></div>
+      </section>
+      <section id="iconsTab" class="tab-pane hidden-pane">
+        <input id="iconSearch" class="search" placeholder="Search icons">
+        <div id="iconGrid" class="icon-grid"></div>
+      </section>
+      <section id="importsTab" class="tab-pane hidden-pane import-pane">
+        <label class="upload-card">Import slide image<input id="slideImageInput" type="file" accept="image/*" hidden></label>
+        <label class="upload-card">Import icon / image<input id="assetInput" type="file" accept="image/*,.svg" hidden></label>
+        <label class="upload-card">Import presentation JSON<input id="jsonInput" type="file" accept="application/json,.json" hidden></label>
+        <button id="exportJsonBtn" class="wide">Export presentation JSON</button>
+      </section>
+    </aside>
+
+    <main class="workspace">
+      <div class="workspace-toolbar">
+        <div class="slide-navigation">
+          <button id="previousSlideBtn" class="icon-action" title="Previous slide">‹</button>
+          <span id="slideCounter" class="slide-counter">Slide 1 of 1</span>
+          <button id="nextSlideBtn" class="icon-action" title="Next slide">›</button>
+        </div>
+        <div class="easy-tools">
+          <button id="quickTextBtn">T Edit text</button>
+          <button id="quickImageBtn">▧ Replace image</button>
+          <button id="quickStyleBtn">◐ Change style</button>
+        </div>
+        <label class="zoom-control">Zoom <input id="zoomRange" type="range" min="35" max="100" value="62"></label>
+        <div class="advanced-hidden">
+          <button id="bringForwardBtn">Bring forward</button><button id="sendBackwardBtn">Send backward</button>
+        </div>
+      </div>
+      <div class="guidance-bar"><span>1</span> Choose a template <b>→</b><span>2</span> Click text to edit <b>→</b><span>3</span> Preview and export</div>
+      <div class="stage-wrap"><div id="stageScaler"><div id="slideCanvas" class="slide-canvas" aria-label="Slide canvas"></div></div></div>
+      <div class="status-bar"><span id="statusBar">Ready</span><span class="status-hint">Double-click text to edit • Changes save automatically when you click Save</span></div>
+    </main>
+
+    <aside class="right-panel">
+      <div class="properties-head"><div><strong>Simple edits</strong><span>Only the options you need</span></div><button id="closeProperties">×</button></div>
+      <div id="slideProperties" class="property-group">
+        <label>Slide name<input id="slideName" type="text"></label>
+        <label>Background<select id="backgroundType"><option value="color">Solid colour</option><option value="gradient">Gradient</option><option value="image">Image</option></select></label>
+        <label>Background value<input id="backgroundValue" type="text" placeholder="#061426 or image URL"></label>
+        <input id="backgroundColor" type="color" value="#061426">
+        <label>Font<select id="fontFamily"></select></label>
+      </div>
+      <div id="elementProperties" class="property-group hidden">
+        <div class="property-heading"><strong>Selected item</strong><button id="removeElementBtn" class="danger small">Remove</button></div>
+        <label>Text<textarea id="propText" rows="4"></textarea></label>
+        <label>Text size<input id="propFontSize" type="number" min="8" max="180"></label>
+        <label>Text colour<input id="propColor" type="color"></label>
+        <label>Fill colour<input id="propFill" type="color"></label>
+        <label>Border colour<input id="propBorder" type="color"></label>
+        <label>Alignment<select id="propAlign"><option>left</option><option>center</option><option>right</option></select></label>
+        <label class="check"><input id="propBold" type="checkbox"> Bold text</label>
+        <details><summary>Position and size</summary><div class="two-col"><label>X<input id="propX" type="number"></label><label>Y<input id="propY" type="number"></label></div><div class="two-col"><label>Width<input id="propW" type="number"></label><label>Height<input id="propH" type="number"></label></div><label class="check"><input id="propLocked" type="checkbox"> Lock position</label></details>
+      </div>
+      <div class="help-card"><strong>Need help?</strong><p>Start with a template. Click any wording or number to update it. Advanced tools are available from the ☰ menu.</p></div>
+    </aside>
+  </div>
+
+
+  <div id="marketplaceModal" class="marketplace-modal hidden" aria-hidden="true">
+    <header class="marketplace-header">
+      <div class="marketplace-brand">
+        <button id="closeMarketplace" class="marketplace-back" aria-label="Close marketplace">←</button>
+        <div>
+          <span class="eyebrow">Presentation Studio</span>
+          <h1>Template Marketplace</h1>
+          <p>Ready-made executive charts, dashboards and operating models. Import once, then reuse from My Templates.</p>
+        </div>
+      </div>
+      <div class="marketplace-header-actions">
+        <button id="marketplaceMyTemplates">★ My Templates</button>
+        <button id="marketplaceImportFile" class="secondary-strong">⇩ Import file</button>
+      </div>
+    </header>
+    <div class="marketplace-controls">
+      <div class="marketplace-search-wrap"><span>⌕</span><input id="marketplaceSearch" placeholder="Search dashboards, charts, workflows and organograms"></div>
+      <div id="marketplaceCategories" class="marketplace-categories"></div>
+      <select id="marketplaceSort" aria-label="Sort templates"><option value="featured">Featured</option><option value="name">Name A–Z</option><option value="category">Category</option></select>
+    </div>
+    <main class="marketplace-content">
+      <section class="marketplace-hero">
+        <div><span class="market-badge premium">CURATED COLLECTION</span><h2>Executive-ready visual products</h2><p>Each item includes a chart preview, a plain-language explanation and an editable slide template. Designed for managers who need professional results without starting from scratch.</p></div>
+        <div class="hero-stats"><div><strong id="marketplaceCount">0</strong><span>Templates</span></div><div><strong>16:9</strong><span>Presentation ready</span></div><div><strong>4K</strong><span>Export quality</span></div></div>
+      </section>
+      <div id="marketplaceGrid" class="marketplace-grid"></div>
+      <div id="marketplaceEmpty" class="marketplace-empty hidden"><strong>No matching templates</strong><p>Try another search or category.</p></div>
+    </main>
+    <aside id="marketplaceDetail" class="marketplace-detail hidden" aria-live="polite">
+      <button id="closeMarketplaceDetail" class="detail-close">×</button>
+      <div id="marketplaceDetailPreview" class="detail-preview"></div>
+      <div class="detail-copy">
+        <span id="marketplaceDetailCategory" class="market-badge"></span>
+        <h2 id="marketplaceDetailName"></h2>
+        <p id="marketplaceDetailDescription"></p>
+        <div class="chart-explanation"><strong>What this visual communicates</strong><p id="marketplaceDetailExplanation"></p></div>
+        <div class="best-for"><strong>Best used for</strong><div id="marketplaceDetailUses" class="tag-row"></div></div>
+        <div class="product-meta"><span>Editable</span><span>4K export</span><span>Commercial-ready layout</span></div>
+        <div class="detail-actions"><button id="marketplaceUseNow" class="primary">Use now</button><button id="marketplaceImportToMine" class="secondary-strong">Import to My Templates</button></div>
+      </div>
+    </aside>
+  </div>
+
+  <div id="templateImportModal" class="modal hidden template-import-modal"><div class="import-dialog"><button id="closeTemplateImport" class="modal-close">×</button><h2>Import Template</h2><p>Import a Presentation Studio JSON template. It will be saved in <strong>My Templates</strong>.</p><label class="upload-card large">Choose template file<input id="templateFileInput" type="file" accept="application/json,.json" hidden></label><div id="templateImportStatus" class="import-status"></div></div></div>
+  <div id="previewModal" class="modal hidden"><button id="closePreviewBtn" class="modal-close">×</button><button id="prevPreviewBtn" class="preview-nav prev">‹</button><div id="previewCanvas" class="preview-canvas"></div><button id="nextPreviewBtn" class="preview-nav next">›</button></div>
+  <div id="featureDrawer" class="feature-drawer hidden"><div class="drawer-head"><strong id="drawerTitle">Studio tools</strong><button id="closeDrawer">×</button></div><div id="drawerBody" class="drawer-body"></div></div>
+  <div id="presenterHud" class="presenter-hud hidden"><span id="presenterTimer">00:00</span><span id="presenterSlide">Slide 1 / 1</span><button id="blackScreenBtn">Black screen</button><button id="exitPresenterBtn">Exit</button></div>
+  <div id="blackScreen" class="black-screen hidden"></div>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/pro.js') }}"></script>
+  <script>
+    const menu=document.getElementById('mainMenu'), backdrop=document.getElementById('menuBackdrop');
+    function setMenu(open){menu.classList.toggle('open',open);backdrop.classList.toggle('hidden',!open);document.getElementById('mainMenuBtn').setAttribute('aria-expanded',String(open));}
+    document.getElementById('mainMenuBtn').addEventListener('click',()=>setMenu(!menu.classList.contains('open')));
+    document.getElementById('closeMainMenu').addEventListener('click',()=>setMenu(false));backdrop.addEventListener('click',()=>setMenu(false));
+    document.getElementById('templateShortcut').addEventListener('click',openMarketplace);
+    document.getElementById('importTemplateShortcut').addEventListener('click',()=>document.getElementById('templateImportModal').classList.remove('hidden'));
+    document.getElementById('myTemplatesShortcut').addEventListener('click',()=>openPanelTab('mytemplates'));
+    document.getElementById('closeTemplateImport').addEventListener('click',()=>document.getElementById('templateImportModal').classList.add('hidden'));
+    document.getElementById('templateFileInput').addEventListener('change',e=>importLocalTemplate(e.target.files[0]));
+    document.getElementById('quickTextBtn').addEventListener('click',()=>{document.getElementById('addTextBtn').click();});
+    document.getElementById('quickImageBtn').addEventListener('click',()=>document.getElementById('assetInput').click());
+    document.getElementById('quickStyleBtn').addEventListener('click',()=>document.querySelector('[data-pro="themes"]').click());
+    document.getElementById('menuImportPresentation').addEventListener('click',()=>document.getElementById('jsonInput').click());
+    document.getElementById('menuImportSlide').addEventListener('click',()=>document.getElementById('slideImageInput').click());
+    document.getElementById('fitBtn').addEventListener('click',fitSlide);
+    document.getElementById('closeProperties').addEventListener('click',toggleRightPanel);
+    document.getElementById('helpBtn').addEventListener('click',()=>alert('Getting started\n\n1. Choose a ready-made template.\n2. Double-click text or numbers to edit.\n3. Use Preview to check the slide.\n4. Export in 4K when ready.\n\nAdvanced tools are available from the main menu.'));
+    document.querySelectorAll('#mainMenu button').forEach(b=>b.addEventListener('click',()=>{if(b.id!=='mainMenuBtn')setMenu(false)}));
+    const ts=document.getElementById('templateSearch');ts.addEventListener('input',()=>{const q=ts.value.toLowerCase();document.querySelectorAll('.template-card').forEach(c=>c.style.display=c.textContent.toLowerCase().includes(q)?'flex':'none');document.querySelectorAll('.template-group').forEach(g=>g.style.display=[...g.querySelectorAll('.template-card')].some(c=>c.style.display!=='none')?'block':'none');});
+  </script>
+</body>
+</html>
